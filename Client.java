@@ -1,63 +1,61 @@
-//package Bai3;
+package Bai_TH3;
 
 import java.io.BufferedReader;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.net.Socket;
-import java.util.Scanner;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
 
 public class Client {
-    public final static String SERVER_IP = "127.0.0.1";
-    public final static int SERVER_PORT = 6789;
+    public final static int serverPort = 5678;
 
-    
-
-    public static void main(String[] args) {
-        // Scanner sc = new Scanner(System.in);
-		// System.out.println("Nhap dia chi host");
-		// String SERVER_IP = sc.nextLine();
-		// System.out.println("Nhap so port");
-		// int SERVER_PORT = sc.nextInt();
+    public static void main(String[] args) throws Exception {
         try {
-            Socket s = new Socket(SERVER_IP, SERVER_PORT);
-            System.out.println("Client created");
+            DatagramSocket clientSocket = new DatagramSocket();
+            InetAddress server = InetAddress.getByName("localhost");
+            System.out.println("Client duoc ket noi den Server thanh cong tai port " + serverPort + " va " + server);
 
-            DataInputStream dis = new DataInputStream(s.getInputStream());
-            DataOutputStream dos = new DataOutputStream(s.getOutputStream());
-
-            Scanner sc = new Scanner(System.in);
+            // chua du lieu gui
+            byte[] readBuffer = new byte[4096];
+            // chua du lieu nhan
+            byte[] writeBuffer = null;
 
             while (true) {
-                //Nhan menu tu Server
-                String inputMenu = dis.readUTF();
-                System.out.println("Server: " + inputMenu);
+                System.out.print("Nhap vao mot phuong thuc: ");
+                BufferedReader read = new BufferedReader(new InputStreamReader(System.in));
+                String bString = read.readLine();
 
-                //Chon phuong thuc
-                System.out.print("Client: ");
-                String x = sc.nextLine();
-                dos.writeUTF(x);
+                writeBuffer = bString.getBytes();
+                DatagramPacket InFormServer = new DatagramPacket(writeBuffer, writeBuffer.length, server, serverPort);
+                clientSocket.send(InFormServer);
 
-                //Yeu cau nhap chuoi tu Server
-                String str = dis.readUTF();
-                System.out.println("Server: " + str);
+                DatagramPacket outFromServer = new DatagramPacket(readBuffer, readBuffer.length);
+                clientSocket.receive(outFromServer);
 
-                //Nhap chuoi
-                System.out.print("->Input String: ");
-                String inputStr = sc.nextLine();
-                dos.writeUTF(inputStr);
+                // lay yeu cau nhap n
+                String doi = new String(outFromServer.getData(), 0, outFromServer.getLength());
+                System.out.println(doi);
 
-                //Ket qua tu Server
-                String kq = dis.readUTF();
-                System.out.println("Server: " + kq);
-
+                // gui n den server
+                String aString = read.readLine();
+                writeBuffer = aString.getBytes();
+                InFormServer = new DatagramPacket(writeBuffer, writeBuffer.length, server, serverPort);
+                clientSocket.send(InFormServer);
+                // nhan kq tu server
+                outFromServer = new DatagramPacket(readBuffer, readBuffer.length);
+                clientSocket.receive(outFromServer);
+                String result = new String(outFromServer.getData(), 0, outFromServer.getLength());
+                System.out.println("Ket qua nhan duoc: " + result);
             }
-
-        } catch (IOException ie) {
+            // if (bString.compareTo("0") != 0) {
+            //     System.out.println("Client da dong!");
+            //     clientSocket.close();
+            //     break;
+            // }
+        } catch (IOException e) {
             // TODO: handle exception
-            System.out.println("Errorrr: " + ie);
+            System.out.println("Error: " + e);
         }
     }
 }
